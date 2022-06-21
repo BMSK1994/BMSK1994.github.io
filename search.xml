@@ -4,61 +4,11 @@
   
     
     <entry>
-      <title>java反序列化</title>
-      <link href="/2022/06/21/java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/"/>
-      <url>/2022/06/21/java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/</url>
+      <title>OWASPtop10学习笔记</title>
+      <link href="/2022/06/21/OWASPtop10%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
+      <url>/2022/06/21/OWASPtop10%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
       
-        <content type="html"><![CDATA[]]></content>
-      
-      
-      <categories>
-          
-          <category> Java安全 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 前端 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>trafficTemplate</title>
-      <link href="/2022/06/21/trafficTemplate/"/>
-      <url>/2022/06/21/trafficTemplate/</url>
-      
-        <content type="html"><![CDATA[<h1 id="流量分析实战"><a href="#流量分析实战" class="headerlink" title="流量分析实战"></a>流量分析实战</h1>]]></content>
-      
-      
-      <categories>
-          
-          <category> 学术研究 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> 前端 </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>AES/CBC模式关于加密解密头部缺失的可能性问题</title>
-      <link href="/2022/06/20/test-my-site/"/>
-      <url>/2022/06/20/test-my-site/</url>
-      
-        <content type="html"><![CDATA[<p>d的撒旦撒旦</p>]]></content>
+        <content type="html"><![CDATA[<h1 id="杂项"><a href="#杂项" class="headerlink" title="杂项"></a>杂项</h1><h3 id="SpEL标准解析"><a href="#SpEL标准解析" class="headerlink" title="SpEL标准解析"></a>SpEL标准解析</h3><p>1.标准直接传参</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"><span class="type">Expression</span> <span class="variable">exp</span> <span class="operator">=</span> parser.parseExpression(filterName);</span><br><span class="line"><span class="type">String</span> <span class="variable">filter</span> <span class="operator">=</span> (String)exp.getValue();</span><br></pre></td></tr></table></figure><p>2.redirect客户端重定向传参<br>解释：通过GET请求将SpEL表达式传递给客户端，以便在thymeleaf模板引擎中进一步执行它是一种严重的安全冲突。<br>后端：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">login</span> <span class="operator">=</span> SecurityContextHolder.getContext().getAuthentication().getName();</span><br><span class="line"><span class="type">String</span> <span class="variable">commandForUser</span> <span class="operator">=</span> <span class="string">&quot;new String(\&quot; + login + &quot;</span>\<span class="string">&quot;)&quot;</span>;</span><br><span class="line"><span class="keyword">return</span> <span class="string">&quot;redirect:/download?user=&quot;</span> + commandForUser;</span><br></pre></td></tr></table></figure><p>前端：</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;div th:with=<span class="string">&quot;user=$&#123;param.user&#125;&quot;</span>&gt;</span><br><span class="line">&lt;p&gt;Welcome &lt;span th:text=<span class="string">&quot;$&#123;__$&#123;user&#125;__&#125;&quot;</span>&gt;&lt;/span&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure><p>修复：SpringMVC默认是forward，是服务端行为且共享数据，redirect是客户端行为且不共享数据只通过参数。上述场景该参数是关键的SpEL表达式参数，从SecurityContextHolder中取是安全的，但redirect带参数可能会导致前端修改参数，所以应该通过forward方式不传参而共享model作用域，且thymeleaf模板不必提供这样“${<strong>${user}</strong>}”的SpEL解析窗口。</p><h3 id="LDAP注入"><a href="#LDAP注入" class="headerlink" title="LDAP注入"></a>LDAP注入</h3><p>1.过滤器传参</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">filter</span> <span class="operator">=</span> <span class="string">&quot;(uid=&quot;</span> + uid +<span class="string">&quot;)&quot;</span>;</span><br><span class="line"><span class="type">var</span> <span class="variable">userEntryQuery</span> <span class="operator">=</span> query().base(LdapConstants.USERS_BASE).filter(filter);</span><br></pre></td></tr></table></figure><p>2.电子邮件传参</p><p>​LDAP注入与防御剖析 <a href="https://blog.csdn.net/quiet_girl/article/details/50716312">https://blog.csdn.net/quiet_girl/article/details/50716312</a></p><p>​LDAP简单理解为多类型目录“目录数据库”，能够提供多种形式数据的存储，主要功能是检索而不是修改，Java通过JNDI访问。</p><p>​攻击场景  controller传参userRegistrationDto</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">MY_ENTRY</span> <span class="operator">=</span> <span class="string">&quot;cn=&quot;</span> + userRegistrationDto.getEmail().toLowerCase() + <span class="string">&quot;,&quot;</span> + BASE_DN;</span><br><span class="line"><span class="keyword">try</span>&#123;</span><br><span class="line">    <span class="type">DirContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    context = <span class="keyword">new</span> <span class="title class_">InitialDirContext</span>(env);</span><br><span class="line">    <span class="type">Attributes</span> <span class="variable">attributes</span> <span class="operator">=</span> createAttribute(userRegistrationDto);</span><br><span class="line">    context.createSubContext(MY_ENTRY,attributes)</span><br><span class="line">&#125;<span class="keyword">catch</span>(NamingException e)&#123;</span><br><span class="line">    log.error(<span class="string">&quot;create user in LDAP failed&quot;</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>​修复 使用ESAPI</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String MY_ENTRY = &quot;cn=&quot; + ESAPI.encoder().encodeForLDAP(userRegistrationDto.getEmail().toLowerCase()) + &quot;,&quot; + BASE_DN;</span><br></pre></td></tr></table></figure>]]></content>
       
       
       <categories>
@@ -70,7 +20,7 @@
       
         <tags>
             
-            <tag> 后端 </tag>
+            <tag> 代码审计 </tag>
             
         </tags>
       
@@ -79,13 +29,25 @@
     
     
     <entry>
-      <title>Hello World</title>
-      <link href="/2022/06/20/hello-world/"/>
-      <url>/2022/06/20/hello-world/</url>
+      <title>LeetCode刷题笔记-六月</title>
+      <link href="/2022/06/21/LeetCode%E5%88%B7%E9%A2%98%E7%AC%94%E8%AE%B0-%E5%85%AD%E6%9C%88/"/>
+      <url>/2022/06/21/LeetCode%E5%88%B7%E9%A2%98%E7%AC%94%E8%AE%B0-%E5%85%AD%E6%9C%88/</url>
       
-        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+        <content type="html"><![CDATA[<p>坚持练习简单题、中等题，保证对Java基础的掌握。</p><h4 id="6月21日"><a href="#6月21日" class="headerlink" title="6月21日"></a>6月21日</h4><p>给你一个有效的 IPv4 地址 address，返回这个 IP 地址的无效化版本。所谓无效化 IP 地址，其实就是用 “[.]” 代替了每个 “.”。</p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">defangIPaddr</span><span class="params">(String address)</span> &#123;</span><br><span class="line">        StringBuilder ans=<span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">char</span> c:address.toCharArray())&#123;</span><br><span class="line">            ans.append(c==<span class="string">&#x27;.&#x27;</span>?<span class="string">&quot;[.]&quot;</span>:c);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ans.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>知识点简要</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1.String、StringBuffer和StringBuilder的区别：</span><br><span class="line">简要：String不可变，StringBuffer和StringBuilder能提供方法改变。</span><br><span class="line">a.String类是不可变类，即一旦一个String对象被创建以后，包含在这个对象中的字符序列是不可改变的，直至这个对象被销毁。</span><br><span class="line">b.StringBuffer对象则代表一个字符序列可变的字符串，当一个StringBuffer被创建以后，通过StringBuffer提供的append()、insert()、reverse()、setCharAt()、setLength()等方法可以改变这个字符串对象的字符序列。一旦通过StringBuffer生成了最终想要的字符串，就可以调用它的toString()方法将其转换为一个String对象。</span><br><span class="line">c.StringBuilder类也代表可变字符串对象。实际上，StringBuilder和StringBuffer基本相似，两个类的构造器和方法也基本相同。不同的是：StringBuffer是线程安全的，而StringBuilder则没有实现线程安全功能，所以性能略高。</span><br><span class="line">2.toCharArray String-&gt;Char[]</span><br></pre></td></tr></table></figure>]]></content>
       
       
+      <categories>
+          
+          <category> Java安全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> LeetCode </tag>
+            
+        </tags>
       
     </entry>
     

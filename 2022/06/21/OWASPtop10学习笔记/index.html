@@ -18,7 +18,7 @@
 <link rel="shortcut icon" href="/images/favicon.png">
 
 
-<title>traffictemplate - BMSK</title>
+<title>owasptop10学习笔记 - BMSK</title>
 
 <meta name="keywords" content="代码审计,Java开发,学术研究">
 
@@ -26,7 +26,7 @@
 
 <!-- Jetpack Open Graph Tags -->
 <meta property="og:type" content="article" />
-<meta property="og:title" content="traffictemplate - BMSK" />
+<meta property="og:title" content="owasptop10学习笔记 - BMSK" />
 <meta property="og:description" content="记录2022年剩下的时光" />
 <meta property="og:url" content="https://bmsk1994.github.io" />
 <meta property="og:site_name" content="BMSK" />
@@ -106,11 +106,11 @@
         <li><a href="/">最近</a></li>
         
             
-                <li class="">
+                <li class="active">
                     <a href="/categories/security" data-name="Java安全">Java安全</a>
                 </li>
             
-                <li class="active">
+                <li class="">
                     <a href="/categories/research" data-name="学术研究">学术研究</a>
                 </li>
             
@@ -142,14 +142,36 @@
                 </p>
                 <p>静水流深，沧笙踏歌。</p>
             </div>
-            <h2 class="post-title">trafficTemplate</h2>
+            <h2 class="post-title">OWASPtop10学习笔记</h2>
             <div class="post-meta">
-                本文共计6个字 |
+                本文共计1789个字 |
                 您是第&nbsp;<span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span>位看到它们的小伙伴
             </div>
         </div>
         <div class="post-content markdown-body">
-            <h1 id="流量分析实战"><a href="#流量分析实战" class="headerlink" title="流量分析实战"></a>流量分析实战</h1>
+            <h1 id="杂项"><a href="#杂项" class="headerlink" title="杂项"></a>杂项</h1><h3 id="SpEL标准解析"><a href="#SpEL标准解析" class="headerlink" title="SpEL标准解析"></a>SpEL标准解析</h3><p>1.标准直接传参</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ExpressionParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SpelExpressionParser</span>();</span><br><span class="line"><span class="type">Expression</span> <span class="variable">exp</span> <span class="operator">=</span> parser.parseExpression(filterName);</span><br><span class="line"><span class="type">String</span> <span class="variable">filter</span> <span class="operator">=</span> (String)exp.getValue();</span><br></pre></td></tr></table></figure>
+
+<p>2.redirect客户端重定向传参<br>解释：通过GET请求将SpEL表达式传递给客户端，以便在thymeleaf模板引擎中进一步执行它是一种严重的安全冲突。<br>后端：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">login</span> <span class="operator">=</span> SecurityContextHolder.getContext().getAuthentication().getName();</span><br><span class="line"><span class="type">String</span> <span class="variable">commandForUser</span> <span class="operator">=</span> <span class="string">&quot;new String(\&quot; + login + &quot;</span>\<span class="string">&quot;)&quot;</span>;</span><br><span class="line"><span class="keyword">return</span> <span class="string">&quot;redirect:/download?user=&quot;</span> + commandForUser;</span><br></pre></td></tr></table></figure>
+
+<p>前端：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;div th:with=<span class="string">&quot;user=$&#123;param.user&#125;&quot;</span>&gt;</span><br><span class="line">	&lt;p&gt;Welcome &lt;span th:text=<span class="string">&quot;$&#123;__$&#123;user&#125;__&#125;&quot;</span>&gt;&lt;/span&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修复：SpringMVC默认是forward，是服务端行为且共享数据，redirect是客户端行为且不共享数据只通过参数。上述场景该参数是关键的SpEL表达式参数，从SecurityContextHolder中取是安全的，但redirect带参数可能会导致前端修改参数，所以应该通过forward方式不传参而共享model作用域，且thymeleaf模板不必提供这样“${<strong>${user}</strong>}”的SpEL解析窗口。</p>
+<h3 id="LDAP注入"><a href="#LDAP注入" class="headerlink" title="LDAP注入"></a>LDAP注入</h3><p>1.过滤器传参</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">filter</span> <span class="operator">=</span> <span class="string">&quot;(uid=&quot;</span> + uid +<span class="string">&quot;)&quot;</span>;</span><br><span class="line"><span class="type">var</span> <span class="variable">userEntryQuery</span> <span class="operator">=</span> query().base(LdapConstants.USERS_BASE).filter(filter);</span><br></pre></td></tr></table></figure>
+
+<p>2.电子邮件传参</p>
+<p>​	LDAP注入与防御剖析 <a target="_blank" rel="noopener" href="https://blog.csdn.net/quiet_girl/article/details/50716312">https://blog.csdn.net/quiet_girl/article/details/50716312</a></p>
+<p>​	LDAP简单理解为多类型目录“目录数据库”，能够提供多种形式数据的存储，主要功能是检索而不是修改，Java通过JNDI访问。</p>
+<p>​	攻击场景  controller传参userRegistrationDto</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">MY_ENTRY</span> <span class="operator">=</span> <span class="string">&quot;cn=&quot;</span> + userRegistrationDto.getEmail().toLowerCase() + <span class="string">&quot;,&quot;</span> + BASE_DN;</span><br><span class="line"><span class="keyword">try</span>&#123;</span><br><span class="line">    <span class="type">DirContext</span> <span class="variable">context</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    context = <span class="keyword">new</span> <span class="title class_">InitialDirContext</span>(env);</span><br><span class="line">    <span class="type">Attributes</span> <span class="variable">attributes</span> <span class="operator">=</span> createAttribute(userRegistrationDto);</span><br><span class="line">    context.createSubContext(MY_ENTRY,attributes)</span><br><span class="line">&#125;<span class="keyword">catch</span>(NamingException e)&#123;</span><br><span class="line">    log.error(<span class="string">&quot;create user in LDAP failed&quot;</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​	修复 使用ESAPI</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String MY_ENTRY = &quot;cn=&quot; + ESAPI.encoder().encodeForLDAP(userRegistrationDto.getEmail().toLowerCase()) + &quot;,&quot; + BASE_DN;</span><br></pre></td></tr></table></figure>
+
+
             
                 
             
@@ -162,7 +184,7 @@
         
         <div class="post-tags">标签：
             
-            <a href="/tags/front-end/">前端</a>
+            <a href="/tags/CodeAudit/">代码审计</a>
             
         </div>
         
